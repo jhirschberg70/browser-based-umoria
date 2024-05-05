@@ -25,10 +25,10 @@ static void dungeonGoDownLevel();
 static void dungeonJamDoor();
 static void inventoryRefillLamp();
 
-void startMoria(int seed, bool start_new_game) {
-    // Roguelike keys are disabled by default.
-    // This will be overridden by the setting in the game save file.
-    config::options::use_roguelike_keys = false;
+void startMoria(uint32_t seed, bool start_new_game, bool roguelike_keys) {
+    // Start the game with Roguelike keys (disabled by default)
+    // NOTE: this will be overridden by the game save file.
+    config::options::use_roguelike_keys = roguelike_keys;
 
     priceAdjust();
 
@@ -36,7 +36,7 @@ void startMoria(int seed, bool start_new_game) {
     displaySplashScreen();
 
     // Grab a random seed from the clock
-    seedsInitialize(static_cast<uint32_t>(seed));
+    seedsInitialize(seed);
 
     // Init monster and treasure levels for allocate
     initializeMonsterLevels();
@@ -940,7 +940,7 @@ static void playerDetectEnchantment() {
 
         if (item.category_id != TV_NOTHING && itemEnchanted(item) && randomNumber(chance) == 1) {
             vtype_t tmp_str = {'\0'};
-            (void) sprintf(tmp_str, "There's something about what you are %s...", playerItemWearingDescription(i));
+            (void) snprintf(tmp_str, MORIA_MESSAGE_SIZE, "There's something about what you are %s...", playerItemWearingDescription(i));
             playerDisturb(0, 0);
             printMessage(tmp_str);
             itemAppendToInscription(item, config::identification::ID_MAGIK);
@@ -961,14 +961,14 @@ static int getCommandRepeatCount(char &last_input_command) {
     while (true) {
         if (last_input_command == DELETE || last_input_command == CTRL_KEY('H')) {
             repeat_count /= 10;
-            (void) sprintf(text_buffer, "%d", (int16_t) repeat_count);
+            (void) snprintf(text_buffer, 8, "%d", (int16_t) repeat_count);
             putStringClearToEOL(text_buffer, Coord_t{0, 14});
         } else if (last_input_command >= '0' && last_input_command <= '9') {
             if (repeat_count > 99) {
                 terminalBellSound();
             } else {
                 repeat_count = repeat_count * 10 + last_input_command - '0';
-                (void) sprintf(text_buffer, "%d", repeat_count);
+                (void) snprintf(text_buffer, 8, "%d", repeat_count);
                 putStringClearToEOL(text_buffer, Coord_t{0, 14});
             }
         } else {
@@ -979,7 +979,7 @@ static int getCommandRepeatCount(char &last_input_command) {
 
     if (repeat_count == 0) {
         repeat_count = 99;
-        (void) sprintf(text_buffer, "%d", repeat_count);
+        (void) snprintf(text_buffer, 8, "%d", repeat_count);
         putStringClearToEOL(text_buffer, Coord_t{0, 14});
     }
 
@@ -1055,7 +1055,8 @@ static void executeInputCommands(char &command, int &find_count) {
 
             // Get a count for a command.
             int repeat_count = 0;
-            if ((config::options::use_roguelike_keys && last_input_command >= '0' && last_input_command <= '9') || (!config::options::use_roguelike_keys && last_input_command == '#')) {
+            if ((config::options::use_roguelike_keys && last_input_command >= '0' && last_input_command <= '9') ||
+                (!config::options::use_roguelike_keys && last_input_command == '#')) {
                 repeat_count = getCommandRepeatCount(last_input_command);
             }
 
@@ -1499,14 +1500,18 @@ static void commandLocateOnMap() {
         if (panel.y == old_panel.y && panel.x == old_panel.x) {
             tmp_str[0] = '\0';
         } else {
-            (void) sprintf(tmp_str,                                                                  //
-                           "%s%s of",                                                                //
-                           panel.y < old_panel.y ? " North" : panel.y > old_panel.y ? " South" : "", //
-                           panel.x < old_panel.x ? " West" : panel.x > old_panel.x ? " East" : ""    //
+            (void) snprintf(tmp_str, MORIA_MESSAGE_SIZE, //
+                            "%s%s of",                   //
+                            panel.y < old_panel.y   ? " North"
+                            : panel.y > old_panel.y ? " South"
+                                                    : "", //
+                            panel.x < old_panel.x   ? " West"
+                            : panel.x > old_panel.x ? " East"
+                                                    : "" //
             );
         }
 
-        (void) sprintf(out_val, "Map sector [%d,%d], which is%s your sector. Look which direction?", panel.y, panel.x, tmp_str);
+        (void) snprintf(out_val, MORIA_MESSAGE_SIZE, "Map sector [%d,%d], which is%s your sector. Look which direction?", panel.y, panel.x, tmp_str);
 
         if (!getDirectionWithMemory(out_val, dir_val)) {
             break;
@@ -1997,7 +2002,7 @@ static void playerRegenerateHitPoints(int percent) {
     int32_t new_chp_fraction = (new_chp & 0xFFFF) + py.misc.current_hp_fraction;
 
     if (new_chp_fraction >= 0x10000L) {
-        py.misc.current_hp_fraction = (uint16_t)(new_chp_fraction - 0x10000L);
+        py.misc.current_hp_fraction = (uint16_t) (new_chp_fraction - 0x10000L);
         py.misc.current_hp++;
     } else {
         py.misc.current_hp_fraction = (uint16_t) new_chp_fraction;
@@ -2031,7 +2036,7 @@ static void playerRegenerateMana(int percent) {
     int32_t new_mana_fraction = (new_mana & 0xFFFF) + py.misc.current_mana_fraction;
 
     if (new_mana_fraction >= 0x10000L) {
-        py.misc.current_mana_fraction = (uint16_t)(new_mana_fraction - 0x10000L);
+        py.misc.current_mana_fraction = (uint16_t) (new_mana_fraction - 0x10000L);
         py.misc.current_mana++;
     } else {
         py.misc.current_mana_fraction = (uint16_t) new_mana_fraction;
@@ -2237,7 +2242,7 @@ static void dungeonJamDoor() {
         game.player_free_turn = false;
 
         vtype_t msg = {'\0'};
-        (void) sprintf(msg, "The %s is in your way!", creatures_list[monsters[tile.creature_id].creature_id].name);
+        (void) snprintf(msg, MORIA_MESSAGE_SIZE, "The %s is in your way!", creatures_list[monsters[tile.creature_id].creature_id].name);
         printMessage(msg);
     }
 }

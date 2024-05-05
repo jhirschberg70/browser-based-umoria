@@ -71,19 +71,19 @@ uint32_t getRandomSeed() {
 
 void setRandomSeed(uint32_t seed) {
     // set seed to value between 1 and m-1
-    rnd_seed = (uint32_t)((seed % (RNG_M - 1)) + 1);
+    rnd_seed = (uint32_t) ((seed % (RNG_M - 1)) + 1);
 }
 
 // returns a pseudo-random number from set 1, 2, ..., RNG_M - 1
 int32_t rnd() {
-    auto high = (int32_t)(rnd_seed / RNG_Q);
-    auto low = (int32_t)(rnd_seed % RNG_Q);
-    auto test = (int32_t)(RNG_A * low - RNG_R * high);
+    auto high = (int32_t) (rnd_seed / RNG_Q);
+    auto low = (int32_t) (rnd_seed % RNG_Q);
+    auto test = (int32_t) (RNG_A * low - RNG_R * high);
 
     if (test > 0) {
         rnd_seed = (uint32_t) test;
     } else {
-        rnd_seed = (uint32_t)(test + RNG_M);
+        rnd_seed = (uint32_t) (test + RNG_M);
     }
     return rnd_seed;
 }

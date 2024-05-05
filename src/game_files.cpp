@@ -146,7 +146,7 @@ void outputRandomLevelObjectsToFile() {
         return;
     }
 
-    (void) sprintf(input, "%d", count);
+    (void) snprintf(input, MORIA_OBJ_DESC_SIZE, "%d", count);
     putStringClearToEOL(strcat(input, " random objects being produced..."), Coord_t{0, 0});
 
     putQIO();
@@ -233,7 +233,7 @@ static void writeCharacterSheetToFile(FILE *char_file) {
     if (py.misc.level >= PLAYER_MAX_LEVEL) {
         (void) fprintf(char_file, "%7sExp to Adv : *******", blank);
     } else {
-        (void) fprintf(char_file, "%7sExp to Adv : %7d", blank, (int32_t)(py.base_exp_levels[py.misc.level - 1] * py.misc.experience_factor / 100));
+        (void) fprintf(char_file, "%7sExp to Adv : %7d", blank, (int32_t) (py.base_exp_levels[py.misc.level - 1] * py.misc.experience_factor / 100));
     }
     (void) fprintf(char_file, "    Cur Mana%8s %6d\n", colon, py.misc.current_mana);
     (void) fprintf(char_file, "%28sGold%8s %7d\n\n", blank, colon, py.misc.au);
@@ -260,7 +260,7 @@ static void writeCharacterSheetToFile(FILE *char_file) {
                (class_level_adj[py.misc.class_id][PlayerClassLevelAdj::DEVICE] * py.misc.level / 3);
 
     vtype_t xinfra = {'\0'};
-    (void) sprintf(xinfra, "%d feet", py.flags.see_infra * 10);
+    (void) snprintf(xinfra, MORIA_MESSAGE_SIZE, "%d feet", py.flags.see_infra * 10);
 
     (void) fprintf(char_file, "(Miscellaneous Abilities)\n\n");
     (void) fprintf(char_file, " Fighting    : %-10s", statRating(Coord_t{12, xbth}));
@@ -380,7 +380,7 @@ bool outputPlayerCharacterToFile(char *filename) {
             (void) close(fd);
         }
         vtype_t msg = {'\0'};
-        (void) sprintf(msg, "Can't open file %s:", filename);
+        (void) snprintf(msg, MORIA_MESSAGE_SIZE, "Can't open file %s:", filename);
         printMessage(msg);
         return false;
     }

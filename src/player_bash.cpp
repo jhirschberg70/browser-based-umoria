@@ -92,7 +92,7 @@ static void playerBashAttack(Coord_t coord) {
     if (!monster.lit) {
         (void) strcpy(name, "it");
     } else {
-        (void) sprintf(name, "the %s", creature.name);
+        (void) snprintf(name, MORIA_MESSAGE_SIZE, "the %s", creature.name);
     }
 
     int base_to_hit = py.stats.used[PlayerAttr::A_STR];
@@ -107,7 +107,7 @@ static void playerBashAttack(Coord_t coord) {
 
     if (playerTestBeingHit(base_to_hit, (int) py.misc.level, (int) py.stats.used[PlayerAttr::A_DEX], (int) creature.ac, PlayerClassLevelAdj::BTH)) {
         vtype_t msg = {'\0'};
-        (void) sprintf(msg, "You hit %s.", name);
+        (void) snprintf(msg, MORIA_MESSAGE_SIZE, "You hit %s.", name);
         printMessage(msg);
 
         int damage = diceRoll(py.inventory[PlayerEquipment::Arm].damage);
@@ -121,7 +121,7 @@ static void playerBashAttack(Coord_t coord) {
 
         // See if we done it in.
         if (monsterTakeHit(monster_id, damage) >= 0) {
-            (void) sprintf(msg, "You have slain %s.", name);
+            (void) snprintf(msg, MORIA_MESSAGE_SIZE, "You have slain %s.", name);
             printMessage(msg);
             displayCharacterExperience();
         } else {
@@ -142,21 +142,21 @@ static void playerBashAttack(Coord_t coord) {
                     monster.stunned_amount = 24;
                 }
 
-                (void) sprintf(msg, "%s appears stunned!", name);
+                (void) snprintf(msg, MORIA_MESSAGE_SIZE, "%s appears stunned!", name);
             } else {
-                (void) sprintf(msg, "%s ignores your bash!", name);
+                (void) snprintf(msg, MORIA_MESSAGE_SIZE, "%s ignores your bash!", name);
             }
             printMessage(msg);
         }
     } else {
         vtype_t msg = {'\0'};
-        (void) sprintf(msg, "You miss %s.", name);
+        (void) snprintf(msg, MORIA_MESSAGE_SIZE, "You miss %s.", name);
         printMessage(msg);
     }
 
     if (randomNumber(150) > py.stats.used[PlayerAttr::A_DEX]) {
         printMessage("You are off balance.");
-        py.flags.paralysis = (int16_t)(1 + randomNumber(2));
+        py.flags.paralysis = (int16_t) (1 + randomNumber(2));
     }
 }
 
@@ -183,7 +183,7 @@ static void playerBashClosedDoor(Coord_t coord, int dir, Tile_t &tile, Inventory
         inventoryItemCopyTo(config::dungeon::objects::OBJ_OPEN_DOOR, game.treasure.list[tile.treasure_id]);
 
         // 50% chance of breaking door
-        item.misc_use = (int16_t)(1 - randomNumber(2));
+        item.misc_use = (int16_t) (1 - randomNumber(2));
 
         tile.feature_id = TILE_CORR_FLOOR;
 
@@ -198,7 +198,7 @@ static void playerBashClosedDoor(Coord_t coord, int dir, Tile_t &tile, Inventory
 
     if (randomNumber(150) > py.stats.used[PlayerAttr::A_DEX]) {
         printMessage("You are off-balance.");
-        py.flags.paralysis = (int16_t)(1 + randomNumber(2));
+        py.flags.paralysis = (int16_t) (1 + randomNumber(2));
         return;
     }
 

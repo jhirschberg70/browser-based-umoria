@@ -5,6 +5,9 @@ if (${CMAKE_SOURCE_DIR} STREQUAL "${PROJECT_SOURCE_DIR}/src")
     message(FATAL_ERROR "CMake generation is not allowed within the source directory!")
 endif ()
 
+project(umoria
+    LANGUAGES CXX
+)
 
 #
 # Set a default build type
@@ -19,12 +22,9 @@ else ()
     message(STATUS "Build type set to '${CMAKE_BUILD_TYPE}'")
 endif ()
 
-# Compiler settings (this must come before calling project)
-set(CMAKE_CXX_COMPILER g++)
+# Compiler settings
 set(CMAKE_CXX_STANDARD 14)
 set(CMAKE_CXX_STANDARD_REQUIRED on)
-
-project(umoria)
 
 #
 # Core set of warnings
@@ -65,6 +65,9 @@ if ("${CMAKE_CXX_COMPILER_ID}" STREQUAL "GNU")
     set(cxx_warnings "${cxx_warnings} -Wno-format-overflow")
 endif()
 
+# Ignore string truncation warnings for using snprintf
+set(cxx_warnings "${cxx_warnings} -Wno-format-truncation")
+
 #
 # Set the flags and warnings for the debug/release builds
 #
@@ -75,7 +78,7 @@ set(CMAKE_CXX_FLAGS_RELEASE "${CMAKE_CXX_FLAGS_RELEASE} -O2 ${cxx_warnings}")
 #
 # Source files and directories
 #
-set(source_dir ${PROJECT_SOURCE_DIR}/src)
+set(source_dir src)
 set(
         source_files
         ${source_dir}/character.h
@@ -170,22 +173,22 @@ set(EXECUTABLE_OUTPUT_PATH ${build_dir})
 # Core game data files
 set(
         data_files
-        ${PROJECT_SOURCE_DIR}/data/help.txt
-        ${PROJECT_SOURCE_DIR}/data/help_wizard.txt
-        ${PROJECT_SOURCE_DIR}/data/rl_help.txt
-        ${PROJECT_SOURCE_DIR}/data/rl_help_wizard.txt
-        ${PROJECT_SOURCE_DIR}/data/welcome.txt
-        ${PROJECT_SOURCE_DIR}/data/death_tomb.txt
-        ${PROJECT_SOURCE_DIR}/data/death_royal.txt
+        data/help.txt
+        data/help_wizard.txt
+        data/rl_help.txt
+        data/rl_help_wizard.txt
+        data/welcome.txt
+        data/death_tomb.txt
+        data/death_royal.txt
 )
 file(COPY ${data_files} DESTINATION "${data_dir}")
 
 # Various support files (readme, etc.)
 set(
         support_files
-        ${PROJECT_SOURCE_DIR}/data/scores.dat
-        ${PROJECT_SOURCE_DIR}/AUTHORS
-        ${PROJECT_SOURCE_DIR}/LICENSE
+        data/scores.dat
+        AUTHORS
+        LICENSE
 )
 file(COPY ${support_files} DESTINATION "${build_dir}")
 
@@ -212,7 +215,7 @@ set(umoria_version "${umoria_version_major}.${umoria_version_minor}.${umoria_ver
 #
 
 # Fetch release date from CHANGELOG if it's there :-)
-file(READ "${PROJECT_SOURCE_DIR}/CHANGELOG.md" changelog)
+file(READ "CHANGELOG.md" changelog)
 string(REGEX MATCH "## ${umoria_version} \\(([0-9][0-9][0-9][0-9]-[0-9][0-9]-[0-9][0-9])\\)" results ${changelog})
 list(LENGTH results match_count)
 if (match_count EQUAL 0)

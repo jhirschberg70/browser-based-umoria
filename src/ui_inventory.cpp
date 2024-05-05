@@ -5,12 +5,12 @@
 
 #include "headers.h"
 
-static void inventoryItemWeightText(char *text, int itemId) {
+static void inventoryItemWeightText(obj_desc_t text, int itemId) {
     int totalWeight = py.inventory[itemId].weight * py.inventory[itemId].items_count;
     int quotient = totalWeight / 10;
     int remainder = totalWeight % 10;
 
-    (void) sprintf(text, "%3d.%d lb", quotient, remainder);
+    (void) snprintf(text, MORIA_OBJ_DESC_SIZE, "%3d.%d lb", quotient, remainder);
 }
 
 // Displays inventory items from `item_id_start` to `item_id_end` -RAK-
@@ -43,7 +43,7 @@ int displayInventoryItems(int itemIdStart, int itemIdEnd, bool weighted, int col
         // Truncate if too long.
         description[lim] = 0;
 
-        (void) sprintf(descriptions[i], "%c) %s", 'a' + i, description);
+        (void) snprintf(descriptions[i], MORIA_MESSAGE_SIZE, "%c) %s", 'a' + i, description);
 
         int l = (int) strlen(descriptions[i]) + 2;
 
@@ -177,7 +177,7 @@ int displayEquipment(bool showWeights, int column) {
         }
 
         // Get position
-        const char *equippedDescription = equipmentPositionDescription((PlayerEquipment)i, py.inventory[i].weight);
+        const char *equippedDescription = equipmentPositionDescription((PlayerEquipment) i, py.inventory[i].weight);
 
         obj_desc_t description = {'\0'};
         itemDescription(description, py.inventory[i], true);
@@ -185,7 +185,7 @@ int displayEquipment(bool showWeights, int column) {
         // Truncate if necessary
         description[lim] = 0;
 
-        (void) sprintf(descriptions[line], "%c) %-14s: %s", line + 'a', equippedDescription, description);
+        (void) snprintf(descriptions[line], MORIA_MESSAGE_SIZE, "%c) %-14s: %s", line + 'a', equippedDescription, description);
 
         int l = (int) strlen(descriptions[line]) + 2;
 
@@ -296,7 +296,8 @@ static void uiCommandSwitchScreen(Screen nextScreen) {
             currentLinePos = py.pack.unique_items;
             break;
         case Screen::Wear:
-            game.screen.screen_left_pos = displayInventoryItems(game.screen.wear_low_id, game.screen.wear_high_id, config::options::show_inventory_weights, game.screen.screen_left_pos, CNIL);
+            game.screen.screen_left_pos =
+                displayInventoryItems(game.screen.wear_low_id, game.screen.wear_high_id, config::options::show_inventory_weights, game.screen.screen_left_pos, CNIL);
             currentLinePos = game.screen.wear_high_id - game.screen.wear_low_id + 1;
             break;
         case Screen::Equipment:
@@ -330,7 +331,7 @@ static bool verifyAction(const char *prompt, int item) {
     description[strlen(description) - 1] = '?';
 
     obj_desc_t msg = {'\0'};
-    (void) sprintf(msg, "%s %s", prompt, description);
+    (void) snprintf(msg, MORIA_OBJ_DESC_SIZE, "%s %s", prompt, description);
 
     return getInputConfirmation(msg);
 }
@@ -440,7 +441,7 @@ static void uiCommandInventoryUnwieldItem() {
         itemDescription(description, py.inventory[PlayerEquipment::Wield], false);
 
         obj_desc_t msg = {'\0'};
-        (void) sprintf(msg, "The %s you are wielding appears to be cursed.", description);
+        (void) snprintf(msg, MORIA_OBJ_DESC_SIZE, "The %s you are wielding appears to be cursed.", description);
 
         printMessage(msg);
 
@@ -503,7 +504,7 @@ static int inventoryGetItemMatchingInscription(char which, char command, int fro
     return itemId;
 }
 
-static void buildCommandHeading(char *str, int from, int to, const char *swap, char command, const char *prompt) {
+static void buildCommandHeading(obj_desc_t str, int from, int to, const char *swap, char command, const char *prompt) {
     from += 'a';
     to += 'a';
 
@@ -517,7 +518,7 @@ static void buildCommandHeading(char *str, int from, int to, const char *swap, c
         digits = ", 0-9";
     }
 
-    (void) sprintf(str, "(%c-%c%s%s%s, space to break, ESC to exit) %s which one?", from, to, list, swap, digits, prompt);
+    (void) snprintf(str, MORIA_OBJ_DESC_SIZE, "(%c-%c%s%s%s, space to break, ESC to exit) %s which one?", from, to, list, swap, digits, prompt);
 }
 
 static void changeScreenForCommand(char command) {
@@ -630,7 +631,7 @@ static void inventoryItemIsCursedMessage(int itemId) {
     itemDescription(description, py.inventory[itemId], false);
 
     obj_desc_t msg = {'\0'};
-    (void) sprintf(msg, "The %s you are ", description);
+    (void) snprintf(msg, MORIA_OBJ_DESC_SIZE, "The %s you are ", description);
 
     if (itemId == PlayerEquipment::Head) {
         (void) strcat(msg, "wielding ");
@@ -790,7 +791,7 @@ static void executeWearItemCommand(int itemId, const char *which, const char *pr
     }
 
     obj_desc_t msg = {'\0'};
-    (void) sprintf(msg, "%s %s (%c)", text, description, 'a' + itemId);
+    (void) snprintf(msg, MORIA_OBJ_DESC_SIZE, "%s %s (%c)", text, description, 'a' + itemId);
     printMessage(msg);
 
     // this is a new weapon, so clear heavy flag
@@ -817,7 +818,7 @@ static void executeDropItemCommand(int itemId, const char *which, const char *pr
         description[strlen(description) - 1] = '?'; // replace period with question
 
         obj_desc_t msg = {'\0'};
-        (void) sprintf(msg, "Drop all %s", description);
+        (void) snprintf(msg, MORIA_OBJ_DESC_SIZE, "Drop all %s", description);
 
         // request command from player
         confirmed = getInputConfirmationWithAbort(0, msg);
@@ -952,15 +953,18 @@ static void inventoryDisplayAppropriateHeader() {
         int weightRemainder = py.pack.weight % 10;
 
         if (!config::options::show_inventory_weights || py.pack.unique_items == 0) {
-            (void) sprintf(msg, "You are carrying %d.%d pounds. In your pack there is %s", weightQuotient, weightRemainder, (py.pack.unique_items == 0 ? "nothing." : "-"));
+            (void) snprintf(msg, MORIA_OBJ_DESC_SIZE, "You are carrying %d.%d pounds. In your pack there is %s", //
+                            weightQuotient, weightRemainder, (py.pack.unique_items == 0 ? "nothing." : "-"));
         } else {
             int capacityQuotient = playerCarryingLoadLimit() / 10;
             int capacityRemainder = playerCarryingLoadLimit() % 10;
 
-            (void) sprintf(msg, "You are carrying %d.%d pounds. Your capacity is %d.%d pounds. In your pack is -", weightQuotient, weightRemainder, capacityQuotient, capacityRemainder);
+            (void) snprintf(msg, MORIA_OBJ_DESC_SIZE,                                                          //
+                            "You are carrying %d.%d pounds. Your capacity is %d.%d pounds. In your pack is -", //
+                            weightQuotient, weightRemainder, capacityQuotient, capacityRemainder);
         }
 
-        putStringClearToEOL(msg, Coord_t{0, 0}  );
+        putStringClearToEOL(msg, Coord_t{0, 0});
     } else if (game.screen.current_screen_id == Screen::Wear) {
         if (game.screen.wear_high_id < game.screen.wear_low_id) {
             putStringClearToEOL("You have nothing you could wield.", Coord_t{0, 0});
@@ -1177,24 +1181,24 @@ bool inventoryGetInputForItemId(int &commandKeyId, const char *prompt, int itemI
         vtype_t description = {'\0'};
 
         if (packFull) {
-            (void) sprintf(description,                                       //
-                           "(%s: %c-%c,%s%s / for %s, or ESC) %s",            //
-                           (menu == PackMenu::Inventory ? "Inven" : "Equip"), //
-                           itemIdStart + 'a',                                 //
-                           itemIdEnd + 'a',                                   //
-                           (menu == PackMenu::Inventory ? " 0-9," : ""),      //
-                           (menuActive ? "" : " * to see,"),                 //
-                           (menu == PackMenu::Inventory ? "Equip" : "Inven"), //
-                           prompt                                             //
+            (void) snprintf(description, MORIA_MESSAGE_SIZE,                   //
+                            "(%s: %c-%c,%s%s / for %s, or ESC) %s",            //
+                            (menu == PackMenu::Inventory ? "Inven" : "Equip"), //
+                            itemIdStart + 'a',                                 //
+                            itemIdEnd + 'a',                                   //
+                            (menu == PackMenu::Inventory ? " 0-9," : ""),      //
+                            (menuActive ? "" : " * to see,"),                  //
+                            (menu == PackMenu::Inventory ? "Equip" : "Inven"), //
+                            prompt                                             //
             );
         } else {
-            (void) sprintf(description,                                   //
-                           "(Items %c-%c,%s%s ESC to exit) %s",           //
-                           itemIdStart + 'a',                             //
-                           itemIdEnd + 'a',                               //
-                           (menu == PackMenu::Inventory ? " 0-9," : ""),  //
-                           (menuActive ? "" : " * for inventory list,"), //
-                           prompt                                         //
+            (void) snprintf(description, MORIA_MESSAGE_SIZE,              //
+                            "(Items %c-%c,%s%s ESC to exit) %s",          //
+                            itemIdStart + 'a',                            //
+                            itemIdEnd + 'a',                              //
+                            (menu == PackMenu::Inventory ? " 0-9," : ""), //
+                            (menuActive ? "" : " * for inventory list,"), //
+                            prompt                                        //
             );
         }
 
