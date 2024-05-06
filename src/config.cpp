@@ -20,7 +20,11 @@ namespace config {
         const std::string help_roguelike_wizard = "data/rl_help_wizard.txt";
         const std::string death_tomb = "data/death_tomb.txt";
         const std::string death_royal = "data/death_royal.txt";
-        std::string scores = "scores.dat";
+#ifdef __EMSCRIPTEN__
+        std::string scores;
+#else
+        const std::string scores = "scores.dat";
+#endif
         std::string save_game = "game.sav";
     } // namespace files
 

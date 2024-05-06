@@ -437,8 +437,8 @@ Module["onRuntimeInitialized"] = async () => {
 
   await IO.initFiles(root)
           .catch(err => {console.log("Error initializing files");});
-  ccall("setSavePath", null, ["string", "string"], [scoresPath, savePath]);
-  callMain(args);
+  Module["ccall"]("setSavePath", null, ["string", "string"], [scoresPath, savePath]);
+  Module["callMain"](args);
 }
 
 Module["print"] = (text) => {IO.print(text)};
