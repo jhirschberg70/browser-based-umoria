@@ -131,7 +131,7 @@ All command-line arguments work through URL GET parameters entered in the URL ba
     /home/user/umoria/umoria.html?umoria/myChar.sav
     file:///C:/umoria/umoria.html?umoria/myChar.sav
 
-Note that the path to myChar.sav in the last two examples includes umoria.  **This is required.**  Due to a limiation of how the filesystem works, all savefiles and scores.dat are saved in a directory called umoria in IndexedDB.  You need to make sure to include umoria in the path any time you specify a savefile name.  If you fail to do that when creating the character, **the character will not be saved.**
+Note that the path to myChar.sav in the last two examples includes umoria.  **This is required.**  Due to a limitation of how the filesystem works, all savefiles and scores.dat are saved in a directory called umoria in IndexedDB.  You need to make sure to include umoria in the path any time you specify a savefile name.  If you fail to do that when creating the character, **the character will not be saved.**
 
 ## Historical Documents
 
