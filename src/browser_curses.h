@@ -48,7 +48,7 @@ inline int beep() { EM_ASM({IO.beep();},); return OK; };
 int clear();
 int clrtobot();
 int clrtoeol ();
-inline int endwin() { EM_ASM({IO.endwin();},); return OK; };
+inline int endwin() { delete stdscr; delete curscr; EM_ASM({IO.endwin();},); return OK; };
 inline void flushinputbuffer() { EM_ASM({IO.flushInputBuffer();},); };
 int getch();
 void getyx(WINDOW *win, int &y, int &x);
