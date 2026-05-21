@@ -13,6 +13,7 @@ CTestTestfile.cmake
 cmake-build-debug
 cmake-build-release
 _CPack_Packages
+generate_umoria_html.cmake 
 
 # Prerequisites
 *.d

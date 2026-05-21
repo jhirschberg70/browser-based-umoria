@@ -23,34 +23,43 @@ else ()
 endif ()
 
 # Compiler settings
+set(umoria_build_for_emscripten OFF)
+if (EMSCRIPTEN OR CMAKE_SYSTEM_NAME STREQUAL "Emscripten")
+    set(umoria_build_for_emscripten ON)
+endif ()
+
 set(CMAKE_CXX_STANDARD 14)
+if (umoria_build_for_emscripten)
+    set(CMAKE_CXX_STANDARD 17)
+endif ()
 set(CMAKE_CXX_STANDARD_REQUIRED on)
 
 #
 # Core set of warnings
 #
-set(cxx_warnings "-Wall")
-set(cxx_warnings "${cxx_warnings} -Wextra")
-set(cxx_warnings "${cxx_warnings} -Wpedantic")
-set(cxx_warnings "${cxx_warnings} -Wshadow")
-set(cxx_warnings "${cxx_warnings} -Werror")
-set(cxx_warnings "${cxx_warnings} -pedantic-errors")
-set(cxx_warnings "${cxx_warnings} -Weffc++ ")
+# set(cxx_warnings "-Wall")
+# set(cxx_warnings "${cxx_warnings} -Wextra")
+# set(cxx_warnings "${cxx_warnings} -Wpedantic")
+# set(cxx_warnings "${cxx_warnings} -Wshadow")
+# set(cxx_warnings "${cxx_warnings} -Werror")
+# set(cxx_warnings "${cxx_warnings} -pedantic-errors")
+# set(cxx_warnings "${cxx_warnings} -Weffc++ ")
 
 # Additional warnings
-set(cxx_warnings "${cxx_warnings} -Wcast-align")
-set(cxx_warnings "${cxx_warnings} -Wdisabled-optimization")
-set(cxx_warnings "${cxx_warnings} -Wfloat-equal")
-set(cxx_warnings "${cxx_warnings} -Winline")
-set(cxx_warnings "${cxx_warnings} -Winvalid-pch")
-set(cxx_warnings "${cxx_warnings} -Wmissing-format-attribute")
-set(cxx_warnings "${cxx_warnings} -Wmissing-include-dirs")
-set(cxx_warnings "${cxx_warnings} -Wpacked")
-set(cxx_warnings "${cxx_warnings} -Wredundant-decls")
-set(cxx_warnings "${cxx_warnings} -Wswitch-default")
-set(cxx_warnings "${cxx_warnings} -Wswitch-enum")
-set(cxx_warnings "${cxx_warnings} -Wunreachable-code")
-set(cxx_warnings "${cxx_warnings} -Wwrite-strings")
+# set(cxx_warnings "${cxx_warnings} -Wcast-align")
+# set(cxx_warnings "${cxx_warnings} -Wdisabled-optimization")
+# set(cxx_warnings "${cxx_warnings} -Wfloat-equal")
+# set(cxx_warnings "${cxx_warnings} -Winline")
+# set(cxx_warnings "${cxx_warnings} -Winvalid-pch")
+# set(cxx_warnings "${cxx_warnings} -Wmissing-format-attribute")
+# set(cxx_warnings "${cxx_warnings} -Wmissing-include-dirs")
+# set(cxx_warnings "${cxx_warnings} -Wpacked")
+# set(cxx_warnings "${cxx_warnings} -Wredundant-decls")
+# set(cxx_warnings "${cxx_warnings} -Wswitch-default")
+# set(cxx_warnings "${cxx_warnings} -Wswitch-enum")
+# set(cxx_warnings "${cxx_warnings} -Wunreachable-code")
+# set(cxx_warnings "${cxx_warnings} -Wwrite-strings")
+# set(cxx_warnings "${cxx_warnings} -Wno-deprecated-declarations")
 
 # Some very strict warnings, that will be nice to use, but require some hefty refactoring
 # set(cxx_warnings "${cxx_warnings} -Wcast-qual")
@@ -60,12 +69,7 @@ set(cxx_warnings "${cxx_warnings} -Wwrite-strings")
 # set(cxx_warnings "${cxx_warnings} -Wstrict-overflow")
 # set(cxx_warnings "${cxx_warnings} -fno-strict-aliasing")
 
-# Temporary support for GCC 8.
-if ("${CMAKE_CXX_COMPILER_ID}" STREQUAL "GNU")
-    set(cxx_warnings "${cxx_warnings} -Wno-format-overflow")
-endif()
-
-# Ignore string truncation warnings for using snprintf
+set(cxx_warnings "${cxx_warnings} -Wno-format-overflow")
 set(cxx_warnings "${cxx_warnings} -Wno-format-truncation")
 
 #
@@ -160,6 +164,14 @@ set(
         ${source_dir}/wizard.cpp
 )
 
+if (umoria_build_for_emscripten)
+    list(APPEND source_files
+        ${source_dir}/browser_curses.h
+        ${source_dir}/browser_curses.cpp
+        ${source_dir}/browser_io.cpp
+    )
+endif ()
+
 
 #
 # Set up the install paths and files
@@ -249,26 +261,52 @@ if(MSVC)
     add_definitions(-Dssize_t=SSIZE_T)
 endif(MSVC)
 
-# This is horrible, but needed bacause `find_package()` doesn't use the
-# include/lib inside the /mingw32 or /mingw64 directories, and with
-# `ncurses-devel` installed, it won't compile.
-if ((MSYS OR MINGW) AND "$ENV{MINGW}" STREQUAL "")
-    message(FATAL_ERROR "You must set the MINGW environment variable ('mingw64' or 'mingw32'). Example: MINGW=mingw64 cmake .")
-    message(FATAL_ERROR "This will be the directory used for locating the ncurses library files.")
-elseif ((MSYS OR MINGW) AND NOT "$ENV{MINGW}" STREQUAL "")
-    message(STATUS "NOTE: Configuring build for Windows release...")
+if (umoria_build_for_emscripten)
+    message(STATUS "NOTE: Configuring build for Linux release with emscripten...")
 
-    # Make the ncurses library static
-    set(CMAKE_CXX_FLAGS_DEBUG "${CMAKE_CXX_FLAGS_DEBUG} -static -lpthread")
-    set(CMAKE_CXX_FLAGS_RELEASE "${CMAKE_CXX_FLAGS_RELEASE} -static -lpthread")
+    set(CMAKE_CXX_FLAGS_RELEASE "${CMAKE_CXX_FLAGS_RELEASE} -O3 -fno-rtti")
+    set(link_flags "-O3 -fno-rtti -lidbfs.js -sASYNCIFY -sASYNCIFY_IGNORE_INDIRECT=1 -sASYNCIFY_IMPORTS=exit -sENVIRONMENT=web -sEXIT_RUNTIME=1 -sEXPORTED_FUNCTIONS=_main,_setSavePath -sEXPORTED_RUNTIME_METHODS=ccall,callMain -sINVOKE_RUN=0 -sSINGLE_FILE=1 --closure 1 --embed-file ${PROJECT_SOURCE_DIR}/data/death_royal.txt@data/death_royal.txt --embed-file ${PROJECT_SOURCE_DIR}/data/death_tomb.txt@data/death_tomb.txt --embed-file ${PROJECT_SOURCE_DIR}/data/help.txt@data/help.txt --embed-file ${PROJECT_SOURCE_DIR}/data/help_wizard.txt@data/help_wizard.txt --embed-file ${PROJECT_SOURCE_DIR}/data/rl_help.txt@data/rl_help.txt --embed-file ${PROJECT_SOURCE_DIR}/data/rl_help_wizard.txt@data/rl_help_wizard.txt --embed-file ${CMAKE_CURRENT_BINARY_DIR}/${build_dir}/data/splash.txt@data/splash.txt --embed-file ${CMAKE_CURRENT_BINARY_DIR}/${build_dir}/data/versions.txt@data/versions.txt --embed-file ${PROJECT_SOURCE_DIR}/data/welcome.txt@data/welcome.txt --embed-file ${PROJECT_SOURCE_DIR}/LICENSE@LICENSE --pre-js ${PROJECT_SOURCE_DIR}/src/browser_io.js")
+    set(CMAKE_EXECUTABLE_SUFFIX ".min.js")
+    set_target_properties(umoria PROPERTIES LINK_FLAGS "${link_flags}")
 
-    set(CURSES_INCLUDE_DIR "/$ENV{MINGW}/include/")
-    set(CURSES_LIBRARIES "/$ENV{MINGW}/lib/libncurses.a")
+    set(generate_umoria_html_script "${CMAKE_CURRENT_BINARY_DIR}/generate_umoria_html.cmake")
+    file(WRITE "${generate_umoria_html_script}" [=[
+file(READ "${INPUT_JS}" umoria_js)
+configure_file("${INPUT_TEMPLATE}" "${OUTPUT_HTML}" @ONLY)
+]=])
+
+    add_custom_command(
+            TARGET umoria
+            POST_BUILD
+            COMMAND ${CMAKE_COMMAND}
+                    -DINPUT_JS=${CMAKE_CURRENT_BINARY_DIR}/${build_dir}/umoria.min.js
+                    -DINPUT_TEMPLATE=${PROJECT_SOURCE_DIR}/data/umoria.html.in
+                    -DOUTPUT_HTML=${CMAKE_CURRENT_BINARY_DIR}/${build_dir}/umoria.html
+                    -P ${generate_umoria_html_script}
+            VERBATIM
+    )
 else ()
-    message(STATUS "NOTE: Configuring build for macOS/Linux release...")
-    set(CURSES_NEED_NCURSES TRUE)
-    find_package(Curses REQUIRED)
-endif ()
+    # This is horrible, but needed bacause `find_package()` doesn't use the
+    # include/lib inside the /mingw32 or /mingw64 directories, and with
+    # `ncurses-devel` installed, it won't compile.
+    if ((MSYS OR MINGW) AND "$ENV{MINGW}" STREQUAL "")
+        message(FATAL_ERROR "You must set the MINGW environment variable ('mingw64' or 'mingw32'). Example: MINGW=mingw64 cmake .")
+        message(FATAL_ERROR "This will be the directory used for locating the ncurses library files.")
+    elseif ((MSYS OR MINGW) AND NOT "$ENV{MINGW}" STREQUAL "")
+        message(STATUS "NOTE: Configuring build for Windows release...")
 
-include_directories(${CURSES_INCLUDE_DIR})
-target_link_libraries(umoria ${CURSES_LIBRARIES})
+        # Make the ncurses library static
+        set(CMAKE_CXX_FLAGS_DEBUG "${CMAKE_CXX_FLAGS_DEBUG} -static -lpthread -DNCURSES_STATIC")
+        set(CMAKE_CXX_FLAGS_RELEASE "${CMAKE_CXX_FLAGS_RELEASE} -static -lpthread -DNCURSES_STATIC")
+
+        set(CURSES_INCLUDE_DIR "/$ENV{MINGW}/include/")
+        set(CURSES_LIBRARIES "/$ENV{MINGW}/lib/libncurses.a")
+    else ()
+        message(STATUS "NOTE: Configuring build for macOS/Linux release...")
+        set(CURSES_NEED_NCURSES TRUE)
+        find_package(Curses REQUIRED)
+    endif ()
+
+    include_directories(${CURSES_INCLUDE_DIR})
+    target_link_libraries(umoria ${CURSES_LIBRARIES})
+endif ()

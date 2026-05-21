@@ -155,7 +155,7 @@ void statsAsString(uint8_t stat, char *stat_string) {
 
 // Print character stat in given row, column -RAK-
 void displayCharacterStats(int stat) {
-    char text[7];
+    char text[MORIA_MESSAGE_SIZE];
     statsAsString(py.stats.used[stat], text);
     putString(stat_names[stat], Coord_t{6 + stat, STAT_COLUMN});
     putString(text, Coord_t{6 + stat, STAT_COLUMN + 6});
@@ -331,7 +331,7 @@ void printCharacterMovementState() {
         char repeat_string[16];
 
         if (config::options::display_counts) {
-            (void) snprintf(repeat_string, 16, "Repeat %-3d", game.command_count);
+            (void) snprintf(repeat_string, sizeof(repeat_string), "Repeat %-.3d", game.command_count);
         } else {
             (void) strcpy(repeat_string, "Repeat");
         }

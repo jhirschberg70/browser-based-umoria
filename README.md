@@ -3,7 +3,7 @@
 _The Dungeons of Moria_ is a single player dungeon simulation originally
 written by Robert Alan Koeneke, with its first public release in 1983.
 The game was originally developed using VMS Pascal before being ported to the
-C language by James E. Wilson in 1988, and released a _Umoria_.
+C language by James E. Wilson in 1988, and released as _Umoria_.
 
 Moria/Umoria has had many variants over the years, with [_Angband_](http://rephial.org/)
 being the most well known. Umoria was also an inspiration for one the most
@@ -24,7 +24,7 @@ tested on Ubuntu.  There are no plans to support building in Windows at this tim
 The "executable" built with emscripten (umoria.html) will run on any modern browser
 regardless of operating system.
 
-Note:  A pre-built version of umoria.html is included in the umoria directory.  You can also play at https://umoria.org/play, thanks to Michael R. Cook https://github.com/mrcook, the current developer and maintainer for Umoria!
+Note:  A pre-built version of umoria.html is included in the umoria directory.  You can also play at https://umoria.org/play, thanks to Michael R. Cook https://github.com/mrcook, the current developer and maintainer of Umoria!
 
 ## Umoria 5.7.x releases
 
@@ -33,7 +33,7 @@ main operating systems: Windows, macOS, and Linux. Support for all other
 outdated computer systems such as MS DOS, "Classic" Mac OS (pre OSX), Amiga,
 and Atari ST was removed.
 
-_Note: there have been no intentional game play changes in the 5.7.x releases._
+_Note: there have been no intentional gameplay changes in the 5.7.x releases._
 
 Since the initial 5.7 release, a great deal of _code restoration_ has been
 undertaken in the hope of aiding future development of the game. Some examples
@@ -102,11 +102,11 @@ As with the macOS/Linux builds, all files will be installed into an `umoria` dir
 ### Emscripten Build
 
 First, install the emscripten SDK (see https://emscripten.org/docs/getting_started/downloads.html for instructions).
-Make a backup of CMakeLists.txt and copy CMakeLists.txt.emscripten to CMakeLists.txt.  Type the following to build:
+Type the following to build:
 
-    $ cmake . -DCMAKE_TOOLCHAIN_FILE=$EMSDK/upstream/emscripten/cmake/Modules/Platform/Emscripten.cmake
-    $ make -j
-    $ cmake --install .
+    $ mkdir build-emscripten && cd build-emscripten
+    $ emcmake cmake ..
+    $ cmake --build . --parallel
 
 ## Running in a Browser
 
@@ -120,7 +120,7 @@ All command-line arguments work through URL GET parameters entered in the URL ba
     file:///C:/umoria/umoria.html
     
     Show the version number:
-    /home/user/umoria.html?-v
+    /home/user/umoria/umoria.html?-v
     file:///C:/umoria/umoria.html?-v
     
     Force a new game with a seed of 67898 and a savefile named myChar.sav:
