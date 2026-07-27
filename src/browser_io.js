@@ -176,7 +176,12 @@ var IO = (function() {
     _fsSynced = false;
 
     return new Promise((resolve, reject) => {
+      const timeoutID = setTimeout(() => {
+        reject("Timeout waiting for FS.syncfs() to complete");
+      }, 5000);
+
       FS.syncfs(false, (err) => {
+        clearTimeout(timeoutID);
         if (err) {
           reject(err);
         }
@@ -196,6 +201,7 @@ var IO = (function() {
   }
 
   function exit(message) {
+    _removeEventHandlers();
     let p = document.createElement("p");
     p.textContent = message;
     _terminal.append(p);
@@ -286,6 +292,15 @@ var IO = (function() {
     _buffer[row][col] = (code === SPACE) ? "\xa0" : String.fromCharCode(code);
   }
 
+  function _beforeunloadHandler(event) {
+    /* Block reloading the page until the user confirms that's what
+   they want to do (data could be lost).  To ensure the event
+   fires in some browsers, the handler must set event.returnValue
+   to a string and return a string. */
+    event.preventDefault();
+    event.returnValue = "";
+  }
+
   function _createScreen(cols, rows) {
     let col = 0,
         row = 0;
@@ -343,57 +358,55 @@ var IO = (function() {
   }
 
   function _initEventHandlers() {
-    document.addEventListener("keydown", function(event) {
-      /* Need user gesture to start an AudioContext */
-      if (_beepContext === null) {
-        _beepContext = new window.AudioContext();
-      }
-      
-      let key = "";
-
-      event.preventDefault();
-
-      /* If modifier only, return */
-      if ((event.key === "Alt") ||
-          (event.key === "Control") ||
-          (event.key === "Shift")) {
-        return;
-      }
-      
-      /* The only modifier key that has to be explicitly mapped is
-         Ctrl because there aren't any ASCII codes that use Alt, and
-         Shift is already accounted for with unique symbols (capital
-         letters, +, _ etc.) */
-
-      if (event.ctrlKey) {
-        key += "^";
-      }
-
-      key += event.key;
-
-      if (ASCII_MAP.has(key)) {
-        _keyBuffer.push(ASCII_MAP.get(key));
-      }
-      else {
-        console.log("key " + key + " doesn't map to ASCII code");
-      }
-    });
-
-    /* Block reloading the page until the user confirms that's what
-       they want to do (data could be lost).  To ensure the event
-       fires in some browsers, the handler must set event.returnValue
-       to a string and return a string. */
-    
-    window.addEventListener("beforeunload", function(event) {
-      event.preventDefault();
-      event.returnValue = "";
-    });
+    document.addEventListener("keydown", _keydownHandler);
+    window.addEventListener("beforeunload", _beforeunloadHandler);
   }
 
   function _initTerminal() {
     _terminal = document.createElement("div");
     _terminal.id = TERMINAL_ID;
     document.body.append(_terminal);
+  }
+
+  function _keydownHandler(event) {
+    /* Need user gesture to start an AudioContext */
+    if (_beepContext === null) {
+      _beepContext = new window.AudioContext();
+    }
+
+    let key = "";
+
+    event.preventDefault();
+
+    /* If modifier only, return */
+    if ((event.key === "Alt") ||
+      (event.key === "Control") ||
+      (event.key === "Shift")) {
+      return;
+    }
+
+    /* The only modifier key that has to be explicitly mapped is
+       Ctrl because there aren't any ASCII codes that use Alt, and
+       Shift is already accounted for with unique symbols (capital
+       letters, +, _ etc.) */
+
+    if (event.ctrlKey) {
+      key += "^";
+    }
+
+    key += event.key;
+
+    if (ASCII_MAP.has(key)) {
+      _keyBuffer.push(ASCII_MAP.get(key));
+    }
+    else {
+      console.log("key " + key + " doesn't map to ASCII code");
+    }
+  }
+
+  function _removeEventHandlers() {
+    document.removeEventListener("keydown", _keydownHandler);
+    window.removeEventListener("beforeunload", _beforeunloadHandler);
   }
 
   window.addEventListener("load", () => {
@@ -418,9 +431,29 @@ var IO = (function() {
 })();
 
 Module["onExit"] = async () => {
-  let message = "Thank you for playing the browser-based version of Umoria!  Refresh/reload the page to play again.";    
-  await IO.closeFiles()
-          .catch(err => {console.log("Error closing files");});
+  let error = null;
+  let savingStatusStartTime = null;
+  
+  const savingTimeoutId = setTimeout(() => {
+    IO.print("Saving files to IndexedDB. Please wait...");
+    savingStatusStartTime = Date.now();
+  }, 100);
+
+  await IO.closeFiles().catch(err => { console.error(err); error = true; });
+  
+  clearTimeout(savingTimeoutId);
+  if (savingStatusStartTime) {
+    let savingStatusEndTime = Date.now();
+    let savingStatusDuration = savingStatusEndTime - savingStatusStartTime;
+    if (savingStatusDuration < 1000) {
+      await new Promise(resolve => setTimeout(resolve, 1000 - savingStatusDuration));
+    }
+  }
+
+  let message = error ? 
+  "Error saving files to IndexedDB. Please check the console for details." : 
+  "Thank you for playing the browser-based version of Umoria! Refresh/reload the page to play again.";
+
   IO.exit(message);
 }
 
